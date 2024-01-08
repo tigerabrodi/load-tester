@@ -1,5 +1,50 @@
 # HTTP(S) Load Tester
 
+# Debugging stories
+
+## Learning how streams work
+
+For some reason, the response wasn't processing.
+
+I only had a listener for the `end` event, but not the `data` event.
+
+Strangely, we never got to the `end` event.
+
+It was as if the response was never ending.
+
+An empty function for the `data` event listener was enough to get the response to process.
+
+I got stuck for like 30 mins.
+
+Found this in the Node.js docs: https://nodejs.org/api/http.html#httpgeturl-options-callback
+
+Pretty dry, but gave me a hint that I needed to listen for the `data` event.
+
+```js
+response.on('data', () => {})
+response.on('end', () => {
+  const endTime = performance.now()
+  const stats = {
+    startTime,
+    firstByteTime,
+    endTime,
+    statusCode: response.statusCode,
+  }
+  console.log('response end')
+  resolve(stats)
+})
+```
+
+### Node and Streams
+
+1. **Stream Flow**: When you receive a response from an HTTP request, it comes in as a readable stream. Streams in Node.js are in paused mode by default. They need to be switched to flowing mode to start emitting data.
+
+2. **Data Event**: The `'data'` event listener is what typically switches the stream from paused mode to flowing mode. This means that without a `'data'` event handler, the stream might not emit any data or end events, because it never starts flowing.
+
+3. **Consuming the Data**: Even if you're not interested in the data itself, having a no-op (`() => {}`) function as the `'data'` event handler is sufficient to get the stream flowing and ensure that the `'end'` event will be emitted once all data has been read.
+
+4. **Stream Completion**: The `'end'` event is emitted only after all the data from the stream has been consumed (i.e., emitted by `'data'` events), signaling that the response has been fully received.
+
 # Node.js requests
 
 In Node.js, when you make an HTTP request, the response from the server is handled as a stream. This means that the data from the response is not received all at once, but in chunks over time. The response object in Node.js is an instance of `stream.Readable`, and it emits several events that you can listen to in order to process the response data. The two most commonly used events are `data` and `end`.
