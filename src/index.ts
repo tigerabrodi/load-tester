@@ -1,6 +1,8 @@
-import http from 'http'
-
 import { Command } from 'commander'
+
+import { loadTestNTimesLinearly } from './loadTestNTimesLinearly'
+import { loadTestOnce } from './loadTestOnce'
+import { loadTestConcurrently } from './shouldRequestNTimesConcurrently'
 
 const DECIMAL_RADIX = 10
 
@@ -41,115 +43,39 @@ const shouldRequestNTimesConcurrently =
   concurrentRequests &&
   concurrentRequests > 1
 
-console.log({
-  shouldOnlyRequestOnce,
-  shouldRequestNTimesLinearly,
-  shouldRequestNTimesConcurrently,
-})
-
 if (shouldOnlyRequestOnce) {
-  new Promise((resolve, reject) => {
-    http
-      .get(url, (response) => {
-        console.log(`Response code: ${response.statusCode}`)
-        resolve(response.statusCode === 200)
-      })
-      .on('error', (error) => {
-        console.error(error)
-        reject()
-      })
-  })
+  loadTestOnce(url)
+    .then((value) => {
+      console.log(value)
+      process.exit(0)
+    })
+    .catch((error) => {
+      console.error(error)
+      process.exit(1)
+    })
+} else if (shouldRequestNTimesLinearly) {
+  console.log('Performing linearly')
+  loadTestNTimesLinearly({ url, numberOfRequests })
     .then(() => {
-      console.log('Single request completed')
+      console.log('Linear load test completed')
       process.exit(0)
     })
     .catch(() => {
-      console.error('Single request failed')
+      console.error('Linear load test failed')
       process.exit(1)
     })
-}
-
-if (shouldRequestNTimesLinearly) {
-  const makeSequentialRequest = async (
-    url: string,
-    index: number
-  ): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      http
-        .get(url, (response) => {
-          console.log(`Request ${index}: Response code: ${response.statusCode}`)
-          resolve()
-        })
-        .on('error', (error) => {
-          console.error(`Request ${index} failed: ${error}`)
-          reject()
-        })
-    })
-  }
-
-  const performSequentialRequests = async () => {
-    for (
-      let requestIndex = 0;
-      requestIndex < numberOfRequests;
-      requestIndex++
-    ) {
-      try {
-        await makeSequentialRequest(url, requestIndex)
-      } catch (error) {
-        console.error('Error in sequential requests:', error)
-        process.exit(1)
-      }
-    }
-    console.log('All linear requests completed')
-  }
-
-  performSequentialRequests()
-    .then(() => process.exit(0))
-    .catch(() => process.exit(1))
-}
-
-if (shouldRequestNTimesConcurrently) {
-  const makeRequest = (url: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      http
-        .get(url, (response) => {
-          console.log(`Response code: ${response.statusCode}`)
-          resolve()
-        })
-        .on('error', (e) => {
-          console.error(e)
-          reject()
-        })
-    })
-  }
-
-  const loadTestConcurrently = async () => {
-    // `Math.min(concurrentRequests, numberOfRequests - requestIndex)` needed for the last batch
-    for (
-      let requestIndex = 0;
-      requestIndex < numberOfRequests;
-      requestIndex += concurrentRequests
-    ) {
-      const batch = []
-      for (
-        let concurrentRequestIndex = 0;
-        concurrentRequestIndex <
-        Math.min(concurrentRequests, numberOfRequests - requestIndex);
-        concurrentRequestIndex++
-      ) {
-        batch.push(makeRequest(url))
-      }
-      await Promise.all(batch)
-    }
-  }
-
-  loadTestConcurrently()
+} else if (shouldRequestNTimesConcurrently) {
+  loadTestConcurrently({
+    url,
+    numberOfRequests,
+    concurrentRequests,
+  })
     .then(() => {
       console.log('Concurrent load test completed')
       process.exit(0)
     })
     .catch(() => {
-      console.log('Concurrent load test failed')
+      console.error('Concurrent load test failed')
       process.exit(1)
     })
 }
