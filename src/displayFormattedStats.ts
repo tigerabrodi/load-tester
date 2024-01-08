@@ -2,7 +2,7 @@ import type { CalculatedStats } from './calculateStats'
 
 export function displayFormattedStats(stats: CalculatedStats) {
   console.log('Results:')
-  console.log(` Total Requests (2XX).......................: ${stats.total2XX}`)
+  console.log(` Success Requests (2XX).......................: ${stats.total2XX}`)
   console.log(` Failed Requests (5XX)......................: ${stats.total5XX}`)
   console.log(
     ` Request/second.............................: ${stats.requestsPerSecond}`
