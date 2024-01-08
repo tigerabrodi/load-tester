@@ -32,12 +32,18 @@ const makeRequest = (url: string): Promise<void> => {
 }
 
 const loadTest = async () => {
-  for (let i = 0; i < numberOfRequests; i += concurrentRequests) {
+  // `Math.min(concurrentRequests, numberOfRequests - requestIndex)` needed for the last batch
+  for (
+    let requestIndex = 0;
+    requestIndex < numberOfRequests;
+    requestIndex += concurrentRequests
+  ) {
     const batch = []
     for (
-      let j = 0;
-      j < Math.min(concurrentRequests, numberOfRequests - i);
-      j++
+      let concurrentRequestIndex = 0;
+      concurrentRequestIndex <
+      Math.min(concurrentRequests, numberOfRequests - requestIndex);
+      concurrentRequestIndex++
     ) {
       batch.push(makeRequest(options.url))
     }
