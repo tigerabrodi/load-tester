@@ -2,6 +2,8 @@ import http from 'http'
 
 import { Command } from 'commander'
 
+const DECIMAL_RADIX = 10
+
 const program = new Command()
 
 program
@@ -11,10 +13,9 @@ program
 program.parse(process.argv)
 
 const options = program.opts()
-const numberOfRequests = parseInt(options.number, 10)
+const numberOfRequests = parseInt(options.number, DECIMAL_RADIX)
 
 for (let i = 0; i < numberOfRequests; i++) {
-  // Make HTTP request to options.url
   http.get(options.url, (response) => {
     console.log(`Response code: ${response.statusCode}`)
   })
