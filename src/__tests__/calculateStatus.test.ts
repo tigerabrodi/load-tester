@@ -12,10 +12,10 @@ it('should calculate stats for a basic scenario', () => {
 
   expect(stats.total2XX).toBe(2)
   expect(stats.total5XX).toBe(1)
-  expect(stats.requestsPerSecond).toBeCloseTo(10)
-  expect(stats.totalRequestTime.mean).toBeCloseTo(100)
-  expect(stats.timeToFirstByte.mean).toBeCloseTo(50)
-  expect(stats.timeToLastByte.mean).toBeCloseTo(50)
+  expect(stats.requestsPerSecond).toBeCloseTo(10, 2)
+  expect(stats.totalRequestTime.mean).toBeCloseTo(0.1, 2)
+  expect(stats.timeToFirstByte.mean).toBeCloseTo(0.05, 2)
+  expect(stats.timeToLastByte.mean).toBeCloseTo(0.05, 2)
 })
 
 it('should calculate stats when all requests are successful', () => {
@@ -27,6 +27,10 @@ it('should calculate stats when all requests are successful', () => {
 
   expect(stats.total2XX).toBe(2)
   expect(stats.total5XX).toBe(0)
+  expect(stats.requestsPerSecond).toBeCloseTo(10, 2)
+  expect(stats.totalRequestTime.mean).toBeCloseTo(0.1, 2)
+  expect(stats.timeToFirstByte.mean).toBeCloseTo(0.05, 2)
+  expect(stats.timeToLastByte.mean).toBeCloseTo(0.05, 2)
 })
 
 it('should calculate stats for a mix of successful and failed requests', () => {
@@ -39,4 +43,8 @@ it('should calculate stats for a mix of successful and failed requests', () => {
 
   expect(stats.total2XX).toBe(1)
   expect(stats.total5XX).toBe(2)
+  expect(stats.requestsPerSecond).toBeCloseTo(10, 2)
+  expect(stats.totalRequestTime.mean).toBeCloseTo(0.1, 2)
+  expect(stats.timeToFirstByte.mean).toBeCloseTo(0.05, 2)
+  expect(stats.timeToLastByte.mean).toBeCloseTo(0.05, 2)
 })
