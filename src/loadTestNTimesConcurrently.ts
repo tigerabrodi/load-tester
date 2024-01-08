@@ -12,7 +12,9 @@ const makeRequest = async (url: string) => {
     http
       .get(url, (response) => {
         const firstByteTime = performance.now()
+        // Needed to process the response
         response.on('data', () => {})
+
         response.on('end', () => {
           const endTime = performance.now()
           resolve({
@@ -46,6 +48,8 @@ export const loadTestConcurrently = async ({
   concurrentRequests: number
 }) => {
   const requestStats: Array<RequestStat> = []
+
+  // `Math.min(concurrentRequests, numberOfRequests - requestIndex)` for last batch
 
   for (
     let requestIndex = 0;
