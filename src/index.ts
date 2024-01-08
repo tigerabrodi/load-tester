@@ -41,21 +41,71 @@ const shouldRequestNTimesConcurrently =
   concurrentRequests &&
   concurrentRequests > 1
 
+console.log({
+  shouldOnlyRequestOnce,
+  shouldRequestNTimesLinearly,
+  shouldRequestNTimesConcurrently,
+})
+
 if (shouldOnlyRequestOnce) {
-  http.get(url, (response) => {
-    console.log(`Response code: ${response.statusCode}`)
+  new Promise((resolve, reject) => {
+    http
+      .get(url, (response) => {
+        console.log(`Response code: ${response.statusCode}`)
+        resolve(response.statusCode === 200)
+      })
+      .on('error', (error) => {
+        console.error(error)
+        reject()
+      })
   })
-  process.exit(0)
+    .then(() => {
+      console.log('Single request completed')
+      process.exit(0)
+    })
+    .catch(() => {
+      console.error('Single request failed')
+      process.exit(1)
+    })
 }
 
 if (shouldRequestNTimesLinearly) {
-  for (let requestIndex = 0; requestIndex < numberOfRequests; requestIndex++) {
-    http.get(url, (response) => {
-      console.log(`Response code: ${response.statusCode}`)
+  const makeSequentialRequest = async (
+    url: string,
+    index: number
+  ): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      http
+        .get(url, (response) => {
+          console.log(`Request ${index}: Response code: ${response.statusCode}`)
+          resolve()
+        })
+        .on('error', (error) => {
+          console.error(`Request ${index} failed: ${error}`)
+          reject()
+        })
     })
   }
 
-  process.exit(0)
+  const performSequentialRequests = async () => {
+    for (
+      let requestIndex = 0;
+      requestIndex < numberOfRequests;
+      requestIndex++
+    ) {
+      try {
+        await makeSequentialRequest(url, requestIndex)
+      } catch (error) {
+        console.error('Error in sequential requests:', error)
+        process.exit(1)
+      }
+    }
+    console.log('All linear requests completed')
+  }
+
+  performSequentialRequests()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1))
 }
 
 if (shouldRequestNTimesConcurrently) {
@@ -95,11 +145,11 @@ if (shouldRequestNTimesConcurrently) {
 
   loadTestConcurrently()
     .then(() => {
-      console.log('Load test completed')
+      console.log('Concurrent load test completed')
       process.exit(0)
     })
     .catch(() => {
-      console.log('Load test failed')
+      console.log('Concurrent load test failed')
       process.exit(1)
     })
 }
