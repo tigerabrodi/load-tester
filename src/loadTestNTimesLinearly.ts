@@ -1,18 +1,40 @@
+import type { RequestStat } from './types'
+
 import http from 'http'
+
+import { calculateStats } from './calculateStats'
+import { displayFormattedStats } from './displayFormattedStats'
 
 const makeSequentialRequest = async (
   url: string,
   index: number
-): Promise<void> => {
+): Promise<RequestStat> => {
+  const startTime = performance.now()
+
   return new Promise((resolve, reject) => {
     http
       .get(url, (response) => {
-        console.log(`Request ${index}: Response code: ${response.statusCode}`)
-        resolve()
+        const firstByteTime = performance.now()
+        response.on('data', () => {})
+        response.on('end', () => {
+          const endTime = performance.now()
+          resolve({
+            startTime,
+            firstByteTime,
+            endTime,
+            statusCode: response.statusCode as number,
+          })
+        })
       })
       .on('error', (error) => {
         console.error(`Request ${index} failed: ${error}`)
-        reject()
+        const endTime = performance.now()
+        reject({
+          startTime,
+          firstByteTime: endTime,
+          endTime,
+          statusCode: 0,
+        })
       })
   })
 }
@@ -24,19 +46,16 @@ export const loadTestNTimesLinearly = async ({
   url: string
   numberOfRequests: number
 }) => {
-  let failedRequests = 0
-  let successRequests = 0
+  const requestStats: Array<RequestStat> = []
 
   for (let requestIndex = 0; requestIndex < numberOfRequests; requestIndex++) {
     try {
-      await makeSequentialRequest(url, requestIndex)
-      successRequests++
-    } catch (error) {
-      failedRequests++
+      const stats = await makeSequentialRequest(url, requestIndex)
+      requestStats.push(stats)
+    } catch (errorStats) {
+      requestStats.push(errorStats as RequestStat)
     }
   }
 
-  console.log('Reached the end of loadTestNTimesLinearly')
-  console.log(`Successful requests: ${successRequests}`)
-  console.log(`Failed requests: ${failedRequests}`)
+  displayFormattedStats(calculateStats(requestStats))
 }

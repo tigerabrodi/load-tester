@@ -1,5 +1,9 @@
+import type { RequestStat } from './types'
+
 import { Command } from 'commander'
 
+import { calculateStats } from './calculateStats'
+import { displayFormattedStats } from './displayFormattedStats'
 import { loadTestConcurrently } from './loadTestNTimesConcurrently'
 import { loadTestNTimesLinearly } from './loadTestNTimesLinearly'
 import { loadTestOnce } from './loadTestOnce'
@@ -44,38 +48,37 @@ const shouldRequestNTimesConcurrently =
   concurrentRequests > 1
 
 if (shouldOnlyRequestOnce) {
+  console.log('Performing once')
   loadTestOnce(url)
-    .then((value) => {
-      console.log(value)
+    .then((resolvedStats) => {
+      displayFormattedStats(
+        calculateStats([resolvedStats] as Array<RequestStat>)
+      )
       process.exit(0)
     })
-    .catch((error) => {
-      console.error(error)
+    .catch((rejectedStats) => {
+      displayFormattedStats(
+        calculateStats([rejectedStats] as Array<RequestStat>)
+      )
+
       process.exit(1)
     })
-} else if (shouldRequestNTimesLinearly) {
+}
+
+if (shouldRequestNTimesLinearly) {
   console.log('Performing linearly')
   loadTestNTimesLinearly({ url, numberOfRequests })
-    .then(() => {
-      console.log('Linear load test completed')
-      process.exit(0)
-    })
-    .catch(() => {
-      console.error('Linear load test failed')
-      process.exit(1)
-    })
-} else if (shouldRequestNTimesConcurrently) {
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1))
+}
+
+if (shouldRequestNTimesConcurrently) {
+  console.log('Performing concurrently')
   loadTestConcurrently({
     url,
     numberOfRequests,
     concurrentRequests,
   })
-    .then(() => {
-      console.log('Concurrent load test completed')
-      process.exit(0)
-    })
-    .catch(() => {
-      console.error('Concurrent load test failed')
-      process.exit(1)
-    })
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1))
 }

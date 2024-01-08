@@ -1,23 +1,37 @@
+import type { RequestStat } from './types'
+
 import http from 'http'
 
-const makeRequest = (url: string): Promise<{ success: boolean }> => {
+import { calculateStats } from './calculateStats'
+import { displayFormattedStats } from './displayFormattedStats'
+
+const makeRequest = async (url: string) => {
+  const startTime = performance.now()
+
   return new Promise((resolve) => {
     http
       .get(url, (response) => {
-        console.log(`Response code: ${response.statusCode}`)
-        if (
-          response.statusCode &&
-          response.statusCode >= 200 &&
-          response.statusCode < 300
-        ) {
-          resolve({ success: true })
-        } else {
-          resolve({ success: false }) // handle non-success HTTP statuses as successful promises but failed requests
-        }
+        const firstByteTime = performance.now()
+        response.on('data', () => {})
+        response.on('end', () => {
+          const endTime = performance.now()
+          resolve({
+            startTime,
+            firstByteTime,
+            endTime,
+            statusCode: response.statusCode,
+          })
+        })
       })
       .on('error', (e) => {
         console.error(e)
-        resolve({ success: false }) // handle network errors as successful promises but failed requests
+        const endTime = performance.now()
+        resolve({
+          startTime,
+          firstByteTime: endTime,
+          endTime,
+          statusCode: 0,
+        })
       })
   })
 }
@@ -31,8 +45,7 @@ export const loadTestConcurrently = async ({
   numberOfRequests: number
   concurrentRequests: number
 }) => {
-  let failedRequests = 0
-  let successRequests = 0
+  const requestStats: Array<RequestStat> = []
 
   for (
     let requestIndex = 0;
@@ -49,17 +62,9 @@ export const loadTestConcurrently = async ({
       batch.push(makeRequest(url))
     }
 
-    const results = await Promise.all(batch)
-    results.forEach((result) => {
-      if (result.success) {
-        successRequests++
-      } else {
-        failedRequests++
-      }
-    })
+    const batchResults = (await Promise.all(batch)) as Array<RequestStat>
+    requestStats.push(...batchResults)
   }
 
-  console.log('Reached the end of loadTestConcurrently')
-  console.log(`Successful requests: ${successRequests}`)
-  console.log(`Failed requests: ${failedRequests}`)
+  displayFormattedStats(calculateStats(requestStats))
 }
