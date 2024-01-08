@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "nodemon --watch 'src/**/*' -e ts --exec 'ts-node src/index.ts'",
-    "test": "vitest"
+    "test": "vitest",
+    "test-server": "nodemon --watch 'src/**/*' -e ts --exec 'ts-node src/testServer.ts'"
   },
   "keywords": [],
   "author": "",
