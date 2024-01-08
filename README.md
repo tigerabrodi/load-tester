@@ -1,5 +1,45 @@
 # HTTP(S) Load Tester
 
+## How to try it
+
+Clone it.
+
+Run `npm install`.
+
+Open three terminals.
+
+1. Start the test server: `npm run test-server`.
+2. Run build, it is in watch mode: `npm run build`.
+3. Call to the test server: `node dist/index.js -u http://localhost:8080/` (this does one request)
+
+## Three ways of testing
+
+### Once
+
+`-u` is always required. Specifying the URL.
+
+`node dist/index.js -u http://localhost:8080/`
+
+### Linear
+
+`node dist/index.js -u http://localhost:8080/ -n 100`
+
+This would make 100 requests. One after another. Linearly.
+
+### Concurrent
+
+`node dist/index.js -u http://localhost:8080/ -n 100 -c 5`
+
+This would make 100 requests. 5 running concurrently at a time.
+
+## All flags
+
+`-u` -> URL (required)
+
+`-n` -> how many requests in total (optional)
+
+`-c` -> How many requests should run concurrently at a time (optional)
+
 # Debugging stories
 
 ## Learning how streams work
