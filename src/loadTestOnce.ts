@@ -17,7 +17,6 @@ export async function loadTestOnce(url: string) {
             endTime,
             statusCode: response.statusCode,
           }
-          console.log('response is ending')
           resolve(stats)
         })
       })
