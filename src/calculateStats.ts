@@ -1,5 +1,7 @@
 import type { RequestStat } from './types'
 
+export type CalculatedStats = ReturnType<typeof calculateStats>
+
 export function calculateStats(requestStats: Array<RequestStat>) {
   let total2XX = 0,
     total5XX = 0
