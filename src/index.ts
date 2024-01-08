@@ -1,8 +1,8 @@
 import { Command } from 'commander'
 
+import { loadTestConcurrently } from './loadTestNTimesConcurrently'
 import { loadTestNTimesLinearly } from './loadTestNTimesLinearly'
 import { loadTestOnce } from './loadTestOnce'
-import { loadTestConcurrently } from './shouldRequestNTimesConcurrently'
 
 const DECIMAL_RADIX = 10
 
